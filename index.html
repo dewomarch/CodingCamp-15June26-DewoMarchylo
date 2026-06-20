@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Life Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="dashboard-grid">
+
+    <!-- Greeting Widget -->
+    <section class="card" id="greeting-widget" aria-label="Greeting">
+      <div id="greeting-time"></div>
+      <div id="greeting-date"></div>
+      <div id="greeting-message"></div>
+    </section>
+
+    <!-- Focus Timer Widget -->
+    <section class="card" id="timer-widget" aria-label="Focus Timer">
+      <h2 class="card__title">Focus Timer</h2>
+      <div id="timer-display">25:00</div>
+      <div id="timer-message" aria-live="polite"></div>
+      <div class="timer-controls">
+        <button id="timer-start">Start</button>
+        <button id="timer-stop">Stop</button>
+        <button id="timer-reset">Reset</button>
+      </div>
+    </section>
+
+    <!-- To-Do List Widget -->
+    <section class="card" id="todo-widget" aria-label="To-Do List">
+      <h2 class="card__title">To-Do</h2>
+      <div class="todo-input-row">
+        <input id="todo-input" type="text" maxlength="200"
+               placeholder="Add a task…" aria-label="Task description" />
+        <button id="todo-add">Add</button>
+      </div>
+      <div id="todo-validation" role="alert" aria-live="assertive"></div>
+      <ul id="todo-list" aria-label="Task list"></ul>
+    </section>
+
+    <!-- Quick Links Widget -->
+    <section class="card" id="links-widget" aria-label="Quick Links">
+      <h2 class="card__title">Quick Links</h2>
+      <div class="links-input-row">
+        <input id="link-label-input" type="text" maxlength="50"
+               placeholder="Label" aria-label="Link label" />
+        <input id="link-url-input" type="text" maxlength="2048"
+               placeholder="URL" aria-label="Link URL" />
+        <button id="link-add">Add</button>
+      </div>
+      <div id="links-validation" role="alert" aria-live="assertive"></div>
+      <div id="links-list" aria-label="Saved links"></div>
+    </section>
+
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>
