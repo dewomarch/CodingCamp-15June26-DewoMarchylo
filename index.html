@@ -12,27 +12,43 @@
     <!-- Greeting Widget -->
     <section class="card greeting-card" id="greeting-widget" aria-label="Greeting">
       <p class="widget-eyebrow">Today</p>
-      <div id="greeting-time" class="greeting-time">--:--</div>
-      <div id="greeting-date" class="greeting-date">Loading date...</div>
-      <div id="greeting-message" class="greeting-message">Hello!</div>
+      <div id="greeting-time" class="greeting-time"></div>
+      <div id="greeting-date" class="greeting-date"></div>
+      <div id="greeting-message" class="greeting-message"></div>
+
+      <!-- Custom name in greeting + Light / Dark mode -->
+      <div class="greeting-controls">
+        <input id="name-input" class="greeting-name-input" type="text" maxlength="50"
+               placeholder="Your name" aria-label="Your name" />
+        <button id="name-save" class="button-secondary" type="button">Save Name</button>
+        <button id="theme-toggle" class="button-secondary" type="button" aria-pressed="false">Dark Mode</button>
+      </div>
+      <div id="greeting-validation" class="validation-message" role="alert" aria-live="assertive"></div>
     </section>
 
     <!-- Focus Timer Widget -->
     <section class="card timer-card" id="timer-widget" aria-label="Focus Timer">
-      <p class="widget-eyebrow">Pomodoro</p>
       <h2 class="card__title">Focus Timer</h2>
-      <div id="timer-display" class="timer-display" aria-live="polite">25:00</div>
+      <div id="timer-display" class="timer-display">25:00</div>
       <div id="timer-message" class="timer-message" aria-live="polite"></div>
-      <div class="timer-controls" aria-label="Timer controls">
+      <div class="timer-controls">
         <button id="timer-start" type="button">Start</button>
-        <button id="timer-stop" type="button">Stop</button>
-        <button id="timer-reset" type="button" class="button-secondary">Reset</button>
+        <button id="timer-stop" class="button-secondary" type="button">Stop</button>
+        <button id="timer-reset" class="button-secondary" type="button">Reset</button>
       </div>
+
+      <!-- Change Pomodoro time -->
+      <div class="timer-settings" aria-label="Pomodoro duration settings">
+        <label for="timer-minutes">Minutes</label>
+        <input id="timer-minutes" type="number" min="1" max="120" value="25"
+               aria-label="Pomodoro minutes" />
+        <button id="timer-apply" class="button-secondary" type="button">Set Time</button>
+      </div>
+      <div id="timer-validation" class="validation-message" role="alert" aria-live="assertive"></div>
     </section>
 
     <!-- To-Do List Widget -->
-    <section class="card todo-card" id="todo-widget" aria-label="To-Do List">
-      <p class="widget-eyebrow">Daily Work</p>
+    <section class="card" id="todo-widget" aria-label="To-Do List">
       <h2 class="card__title">To-Do</h2>
       <div class="todo-input-row">
         <input id="todo-input" type="text" maxlength="200"
@@ -44,8 +60,7 @@
     </section>
 
     <!-- Quick Links Widget -->
-    <section class="card links-card" id="links-widget" aria-label="Quick Links">
-      <p class="widget-eyebrow">Shortcuts</p>
+    <section class="card" id="links-widget" aria-label="Quick Links">
       <h2 class="card__title">Quick Links</h2>
       <div class="links-input-row">
         <input id="link-label-input" type="text" maxlength="50"

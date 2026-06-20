@@ -62,7 +62,7 @@ const StorageService = {
 // ---------------------------------------------------------------------------
 // Utils — shared helpers for ID generation, formatting, validation, and URL
 // normalization.
-// Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 3.3, 3.5, 4.3, 4.4
+// Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 3.3, 3.5, 4.3, 4.4, 7.2, 7.3
 // ---------------------------------------------------------------------------
 
 const Utils = {
@@ -211,6 +211,109 @@ const Utils = {
     }
     return `https://${s}`;
   },
+
+  /**
+   * Normalize task text for duplicate detection.
+   * Trims edges, lowercases, and collapses internal whitespace so visually
+   * identical task text is treated as a duplicate (Challenge: Prevent duplicate tasks).
+   *
+   * @param {string} s
+   * @returns {string}
+   */
+  normalizeTaskText(s) {
+    return String(s).trim().replace(/\s+/g, ' ').toLowerCase();
+  },
+
+  /**
+   * Validate a custom greeting name.
+   * Empty names are allowed so the user can clear the saved name.
+   *
+   * @param {string} s
+   * @returns {{ valid: boolean, reason: string }}
+   */
+  validateName(s) {
+    if (typeof s !== 'string') {
+      return { valid: false, reason: 'Name must be text.' };
+    }
+    if (s.length > 50) {
+      return { valid: false, reason: 'Name must be 50 characters or fewer.' };
+    }
+    return { valid: true, reason: '' };
+  },
+
+  /**
+   * Validate a Pomodoro duration in minutes.
+   * Valid range is 1–120 minutes to keep the timer useful and bounded.
+   *
+   * @param {string|number} value
+   * @returns {{ valid: boolean, reason: string, minutes: number }}
+   */
+  validatePomodoroMinutes(value) {
+    const minutes = Number(value);
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 120) {
+      return { valid: false, reason: 'Pomodoro time must be between 1 and 120 minutes.', minutes: 25 };
+    }
+    return { valid: true, reason: '', minutes };
+  },
+};
+
+
+// ---------------------------------------------------------------------------
+// ThemeWidget — Light / Dark mode challenge.
+// Stores the selected theme and applies it by toggling a class on <body>.
+// Requirements: 7.1, 7.5
+// ---------------------------------------------------------------------------
+
+const ThemeWidget = {
+  /** @type {'light'|'dark'} */
+  _theme: 'light',
+
+  /**
+   * Initialise the theme toggle.
+   * Uses a saved preference when available; otherwise falls back to the system
+   * dark-mode preference through window.matchMedia().
+   *
+   * @returns {void}
+   */
+  init() {
+    const savedTheme = StorageService.get('dashboard_theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      this._theme = savedTheme;
+    } else if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      this._theme = 'dark';
+    }
+
+    const toggleBtn = document.getElementById('theme-toggle');
+    if (toggleBtn) toggleBtn.addEventListener('click', () => this.toggle());
+
+    this._applyTheme();
+  },
+
+  /**
+   * Toggle between light and dark modes.
+   *
+   * @returns {void}
+   */
+  toggle() {
+    this._theme = this._theme === 'dark' ? 'light' : 'dark';
+    StorageService.set('dashboard_theme', this._theme);
+    this._applyTheme();
+  },
+
+  /**
+   * Apply the selected theme to the document body and update button state.
+   *
+   * @returns {void}
+   */
+  _applyTheme() {
+    document.body.classList.toggle('theme-dark', this._theme === 'dark');
+
+    const toggleBtn = document.getElementById('theme-toggle');
+    if (toggleBtn) {
+      toggleBtn.textContent = this._theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+      toggleBtn.setAttribute('aria-pressed', String(this._theme === 'dark'));
+    }
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -219,12 +322,27 @@ const Utils = {
 // ---------------------------------------------------------------------------
 
 const GreetingWidget = {
+  /** @type {string} */
+  _name: '',
   /**
    * Start the widget: run an immediate tick then schedule one every 1000 ms.
    *
    * @returns {void}
    */
   init() {
+    this._name = this._loadName();
+
+    const nameInput = document.getElementById('name-input');
+    const saveBtn   = document.getElementById('name-save');
+
+    if (nameInput) nameInput.value = this._name;
+    if (saveBtn) saveBtn.addEventListener('click', () => this.saveName(nameInput ? nameInput.value : ''));
+    if (nameInput) {
+      nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') this.saveName(nameInput.value);
+      });
+    }
+
     this.tick();
     setInterval(() => this.tick(), 1000);
   },
@@ -250,7 +368,47 @@ const GreetingWidget = {
     const dateStr    = Utils.formatDate(date);
     const greetStr   = Utils.getGreeting(h);
 
-    this._render(timeStr, dateStr, greetStr);
+    this._render(timeStr, dateStr, this._formatGreeting(greetStr));
+  },
+
+  /**
+   * Load the saved custom name used in the greeting message.
+   *
+   * @returns {string}
+   */
+  _loadName() {
+    const savedName = StorageService.get('dashboard_user_name');
+    return typeof savedName === 'string' ? savedName : '';
+  },
+
+  /**
+   * Save a custom name for the greeting widget.
+   * Empty names are accepted and simply remove the name from the greeting.
+   *
+   * @param {string} name
+   * @returns {void}
+   */
+  saveName(name) {
+    const { valid, reason } = Utils.validateName(name);
+    if (!valid) {
+      this._showValidationMsg(reason);
+      return;
+    }
+
+    this._name = name.trim();
+    StorageService.set('dashboard_user_name', this._name);
+    this._showValidationMsg(this._name ? 'Name saved.' : 'Name cleared.');
+    this.tick();
+  },
+
+  /**
+   * Append the saved custom name to the time-based greeting.
+   *
+   * @param {string} greeting
+   * @returns {string}
+   */
+  _formatGreeting(greeting) {
+    return this._name ? `${greeting}, ${this._name}` : greeting;
   },
 
   /**
@@ -270,6 +428,19 @@ const GreetingWidget = {
     if (dateEl)    dateEl.textContent    = dateStr;
     if (messageEl) messageEl.textContent = greeting;
   },
+
+  /**
+   * Display a validation / success message inside `#greeting-validation`.
+   *
+   * @param {string} reason
+   * @returns {void}
+   */
+  _showValidationMsg(reason) {
+    const el = document.getElementById('greeting-validation');
+    if (!el) return;
+    el.textContent = reason;
+    setTimeout(() => { el.textContent = ''; }, 3000);
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -286,6 +457,9 @@ const FocusTimerWidget = {
     intervalId: null,
   },
 
+  /** @type {number} */
+  _durationMinutes: 25,
+
   /**
    * Initialise the widget: set initial state, render, and wire up button click
    * handlers.
@@ -293,19 +467,41 @@ const FocusTimerWidget = {
    * @returns {void}
    */
   init() {
-    this._state.remainingSeconds = 1500;
+    this._durationMinutes = this._loadDurationMinutes();
+    this._state.remainingSeconds = this._durationMinutes * 60;
     this._state.state = 'idle';
     this._state.intervalId = null;
 
-    const startBtn = document.getElementById('timer-start');
-    const stopBtn  = document.getElementById('timer-stop');
-    const resetBtn = document.getElementById('timer-reset');
+    const startBtn  = document.getElementById('timer-start');
+    const stopBtn   = document.getElementById('timer-stop');
+    const resetBtn  = document.getElementById('timer-reset');
+    const applyBtn  = document.getElementById('timer-apply');
+    const minutesEl = document.getElementById('timer-minutes');
 
-    if (startBtn) startBtn.addEventListener('click', () => this.start());
-    if (stopBtn)  stopBtn.addEventListener('click',  () => this.stop());
-    if (resetBtn) resetBtn.addEventListener('click', () => this.reset());
+    if (minutesEl) minutesEl.value = String(this._durationMinutes);
+    if (startBtn)  startBtn.addEventListener('click', () => this.start());
+    if (stopBtn)   stopBtn.addEventListener('click',  () => this.stop());
+    if (resetBtn)  resetBtn.addEventListener('click', () => this.reset());
+    if (applyBtn)  applyBtn.addEventListener('click', () => this.applyDuration(minutesEl ? minutesEl.value : 25));
+    if (minutesEl) {
+      minutesEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') this.applyDuration(minutesEl.value);
+      });
+    }
 
     this._render();
+  },
+
+  /**
+   * Load the saved Pomodoro duration in minutes.
+   * Falls back to the default 25 minutes when storage is empty or invalid.
+   *
+   * @returns {number}
+   */
+  _loadDurationMinutes() {
+    const savedMinutes = StorageService.get('pomodoro_minutes');
+    const result = Utils.validatePomodoroMinutes(savedMinutes);
+    return result.valid ? result.minutes : 25;
   },
 
   /**
@@ -346,7 +542,7 @@ const FocusTimerWidget = {
   reset() {
     clearInterval(this._state.intervalId);
     this._state.intervalId = null;
-    this._state.remainingSeconds = 1500;
+    this._state.remainingSeconds = this._durationMinutes * 60;
     this._state.state = 'idle';
 
     const messageEl = document.getElementById('timer-message');
@@ -364,11 +560,38 @@ const FocusTimerWidget = {
   _tick() {
     this._state.remainingSeconds -= 1;
 
-    if (this._state.remainingSeconds === 0) {
+    if (this._state.remainingSeconds <= 0) {
+      this._state.remainingSeconds = 0;
       this._onComplete();
     } else {
       this._render();
     }
+  },
+
+  /**
+   * Apply a custom Pomodoro duration.
+   * The duration can be changed only while the timer is not running to avoid
+   * unexpected jumps during an active focus session.
+   *
+   * @param {string|number} value
+   * @returns {void}
+   */
+  applyDuration(value) {
+    if (this._state.state === 'running') {
+      this._showValidationMsg('Stop the timer before changing duration.');
+      return;
+    }
+
+    const result = Utils.validatePomodoroMinutes(value);
+    if (!result.valid) {
+      this._showValidationMsg(result.reason);
+      return;
+    }
+
+    this._durationMinutes = result.minutes;
+    StorageService.set('pomodoro_minutes', this._durationMinutes);
+    this.reset();
+    this._showValidationMsg('Pomodoro time saved.');
   },
 
   /**
@@ -402,6 +625,11 @@ const FocusTimerWidget = {
     if (startBtn) startBtn.disabled = (state === 'running' || state === 'complete');
     if (stopBtn)  stopBtn.disabled  = (state !== 'running');
     if (resetBtn) resetBtn.disabled = false;
+
+    const minutesEl = document.getElementById('timer-minutes');
+    if (minutesEl && document.activeElement !== minutesEl) {
+      minutesEl.value = String(this._durationMinutes);
+    }
   },
 
   /**
@@ -419,6 +647,19 @@ const FocusTimerWidget = {
     if (messageEl) messageEl.textContent = 'Session complete! 🎉';
 
     this._render();
+  },
+
+  /**
+   * Display a validation / status message inside `#timer-validation`.
+   *
+   * @param {string} reason
+   * @returns {void}
+   */
+  _showValidationMsg(reason) {
+    const el = document.getElementById('timer-validation');
+    if (!el) return;
+    el.textContent = reason;
+    setTimeout(() => { el.textContent = ''; }, 3000);
   },
 };
 
@@ -539,6 +780,11 @@ const TodoListWidget = {
       return;
     }
 
+    if (this._hasDuplicateText(text)) {
+      this._showValidationMsg('A task with this description already exists.');
+      return;
+    }
+
     /** @type {{ id: string, text: string, completed: boolean }} */
     const task = {
       id: Utils.generateId(),
@@ -565,12 +811,32 @@ const TodoListWidget = {
       return;
     }
 
+    if (this._hasDuplicateText(newText, id)) {
+      this._showValidationMsg('A task with this description already exists.');
+      return;
+    }
+
     const task = AppState.tasks.find((t) => t.id === id);
     if (task) {
       task.text = newText.trim();
       this._saveToStorage();
       this._render();
     }
+  },
+
+  /**
+   * Check whether a task text already exists.
+   * Used by the Prevent duplicate tasks challenge for both add and edit flows.
+   *
+   * @param {string} text
+   * @param {string|null} excludeId
+   * @returns {boolean}
+   */
+  _hasDuplicateText(text, excludeId = null) {
+    const normalizedText = Utils.normalizeTaskText(text);
+    return AppState.tasks.some((task) => {
+      return task.id !== excludeId && Utils.normalizeTaskText(task.text) === normalizedText;
+    });
   },
 
   /**
@@ -1042,6 +1308,7 @@ const App = {
    * @returns {void}
    */
   init() {
+    ThemeWidget.init();
     GreetingWidget.init();
     FocusTimerWidget.init();
     TodoListWidget.init();

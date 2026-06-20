@@ -13,6 +13,8 @@
   --color-danger:        hsl(354, 70%, 54%);
   --color-danger-dark:   hsl(354, 70%, 42%);
   --color-border:        hsl(220, 20%, 88%);
+  --color-input-bg:      #ffffff;
+  --color-soft-surface:  hsla(220, 20%, 96%, 0.62);
 
   --spacing-xs:   0.25rem;
   --spacing-sm:   0.5rem;
@@ -25,6 +27,18 @@
   --radius-lg:    16px;
   --shadow-card:  0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-hover: 0 8px 24px rgba(40, 45, 80, 0.12);
+}
+
+body.theme-dark {
+  --color-bg:            hsl(228, 26%, 11%);
+  --color-card:          hsl(228, 24%, 16%);
+  --color-text:          hsl(220, 35%, 94%);
+  --color-text-muted:    hsl(220, 18%, 70%);
+  --color-border:        hsl(228, 18%, 28%);
+  --color-input-bg:      hsl(228, 22%, 20%);
+  --color-soft-surface:  hsla(228, 22%, 22%, 0.82);
+  --shadow-card:         0 2px 10px rgba(0, 0, 0, 0.28);
+  --shadow-hover:        0 8px 26px rgba(0, 0, 0, 0.32);
 }
 
 /* --------------------------------------------------------------------------
@@ -91,7 +105,7 @@ input {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   color: var(--color-text);
-  background: #ffffff;
+  background: var(--color-input-bg);
 }
 
 input::placeholder {
@@ -176,6 +190,17 @@ input::placeholder {
   font-weight: 800;
 }
 
+.greeting-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.greeting-name-input {
+  min-width: 0;
+}
+
 /* --------------------------------------------------------------------------
    Focus Timer Widget
    Requirements: 2.7, 2.8, 2.9, 2.10
@@ -207,6 +232,20 @@ input::placeholder {
 .links-input-row {
   display: flex;
   gap: var(--spacing-sm);
+}
+
+.timer-settings {
+  display: grid;
+  grid-template-columns: auto minmax(5rem, 8rem) auto;
+  gap: var(--spacing-sm);
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--spacing-md);
+}
+
+.timer-settings label {
+  color: var(--color-text-muted);
+  font-weight: 700;
 }
 
 .button-secondary {
@@ -244,7 +283,7 @@ input::placeholder {
   padding: var(--spacing-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: hsla(220, 20%, 96%, 0.62);
+  background: var(--color-soft-surface);
 }
 
 .task__text {
@@ -300,7 +339,7 @@ input::placeholder {
   padding: var(--spacing-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: hsla(220, 20%, 96%, 0.62);
+  background: var(--color-soft-surface);
 }
 
 .link-item__button {
@@ -350,7 +389,9 @@ input::placeholder {
     padding: var(--spacing-md);
   }
 
+  .greeting-controls,
   .timer-controls,
+  .timer-settings,
   .todo-input-row,
   .links-input-row,
   .task-item,
