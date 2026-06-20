@@ -99,7 +99,8 @@ StorageService = {
 ```js
 Utils = {
   generateId()          → string          // crypto.randomUUID() with Date.now() fallback
-  formatTime(h, m, s)   → string          // zero-padded "MM:SS"
+  formatClockTime(date)   → string          // zero-padded "HH:MM"
+  formatDuration(seconds) → string          // zero-padded "MM:SS"
   formatDate(date)      → string          // "Monday, 16 June 2025"
   getGreeting(hour)     → string          // returns one of the four greeting strings
   validateTaskText(s)   → { valid, reason }
@@ -433,13 +434,13 @@ DOMContentLoaded
 
 *A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
-The following properties cover the logic layer: formatting utilities, greeting logic, timer state machine, task/link validation, and serialization round-trips. UI rendering side-effects and localStorage I/O integration are covered by example-based tests only (see Testing Strategy).
+The following properties cover the logic layer: formatting utilities, greeting logic, timer state machine, task/link validation, and serialization round-trips. UI rendering side-effects and localStorage I/O integration are handled through runtime error handling and manual browser verification.
 
 ---
 
 ### Property 1: Time and Date Formatting Correctness
 
-*For any* valid `Date` object, `Utils.formatTime(date)` shall return a string matching the regular expression `^\d{2}:\d{2}$` (zero-padded HH:MM), and `Utils.formatDate(date)` shall return a string containing the correct day-of-week name, numeric day, month name, and 4-digit year that correspond to that `Date`.
+*For any* valid `Date` object, `Utils.formatClockTime(date)` shall return a string matching the regular expression `^\d{2}:\d{2}$` (zero-padded HH:MM), and `Utils.formatDate(date)` shall return a string containing the correct day-of-week name, numeric day, month name, and 4-digit year that correspond to that `Date`.
 
 **Validates: Requirements 1.1, 1.2**
 
@@ -488,7 +489,7 @@ Every hour in the 24-hour domain maps to exactly one of the four greeting string
 
 ### Property 6: Timer Display Format Correctness
 
-*For any* `remainingSeconds` integer in [0, 1500], `Utils.formatTime(remainingSeconds)` shall return a string matching `^\d{2}:\d{2}$` where the minutes portion is `Math.floor(s / 60)` (zero-padded) and the seconds portion is `s % 60` (zero-padded).
+*For any* `remainingSeconds` integer in [0, 1500], `Utils.formatDuration(remainingSeconds)` shall return a string matching `^\d{2}:\d{2}$` where the minutes portion is `Math.floor(s / 60)` (zero-padded) and the seconds portion is `s % 60` (zero-padded).
 
 **Validates: Requirement 2.9**
 
@@ -616,59 +617,3 @@ The combined serialize → deserialize cycle is the identity function for both d
 | Edit saved with invalid description | `Utils.validateTaskText()` | Validation message; original description retained (Req 3.5) |
 
 ---
-
-## Testing Strategy
-
-### PBT Applicability
-
-This feature is suitable for property-based testing on its pure logic layer. The validation functions, serialization helpers, greeting/time formatter, URL normalizer, and timer state machine all have clear input domains and deterministic outputs. PBT is **not** applied to DOM rendering, `localStorage` I/O integration, or the `setInterval` scheduling behavior — those use example-based tests.
-
-**PBT Library**: [fast-check](https://fast-check.dev/) (JavaScript, MIT license — no npm required in browser; use the CDN build for tests run in Node.js with a test runner such as [Vitest](https://vitest.dev/)).
-
-### Unit / Example-Based Tests
-
-Covers:
-- `FocusTimerWidget.init()` — initial state is `{remainingSeconds: 1500, state: 'idle'}`
-- `GreetingWidget.tick()` with an invalid Date — fallback "Hello!" is displayed
-- `localStorage.getItem` throws — widget initializes with empty array and error message
-- `JSON.parse` throws SyntaxError — widget discards corrupted data and shows error message
-- List at 50 links — `addLink()` rejects and shows limit message
-- Clicking a link button — `window.open` called with correct URL and `'_blank'`
-- `DOMContentLoaded` — all four widgets mount without uncaught exceptions
-- Responsive layout breakpoints — verified at 375 px and 1200 px via browser DevTools
-
-### Property-Based Tests
-
-Each property corresponds directly to a numbered property in the Correctness Properties section. Each test runs **minimum 100 iterations** via fast-check's `fc.assert(fc.property(...))`.
-
-| Test | Property | fast-check Generators |
-|---|---|---|
-| Time formatting | Property 1 | `fc.date()` |
-| Greeting correctness | Property 2 | `fc.integer({min:0, max:23})` |
-| Button state invariant | Property 3 | `fc.constantFrom('idle','running','paused','complete')` |
-| Reset universality | Property 4 | `fc.integer({min:0, max:1500})`, `fc.constantFrom(...)` |
-| Stop preserves time | Property 5 | `fc.integer({min:1, max:1500})` |
-| Timer format | Property 6 | `fc.integer({min:0, max:1500})` |
-| Valid task addition | Property 7 | `fc.string({minLength:1, maxLength:200}).filter(s => s.trim().length > 0)` |
-| Invalid task rejection | Property 8 | `fc.string().filter(s => s.trim().length === 0 \|\| s.length > 200)` |
-| Task edit valid/invalid | Property 9 | Task generator + valid/invalid text generators |
-| Toggle round-trip | Property 10 | Task generator (`fc.boolean()` for initial completed) |
-| Task deletion | Property 11 | Non-empty task list generator + pick one id |
-| Completed class | Property 12 | Task generator |
-| Valid link addition | Property 13 | Label + URL generators respecting constraints |
-| Invalid link rejection | Property 14 | Empty/whitespace string generators |
-| URL normalization | Property 15 | `fc.string()` filtered to no-scheme strings; also already-schemed strings |
-| Duplicate URL rejection | Property 16 | Non-empty link list generator; reuse existing URL |
-| Link deletion | Property 17 | Non-empty link list generator + pick one id |
-| Serialization round-trip | Property 18 | Task generator; LinkItem generator |
-
-**Tag format** for each test comment:
-```
-// Feature: todo-life-dashboard, Property N: <property title>
-```
-
-### Integration Tests
-
-- `localStorage` round-trip end-to-end: save tasks/links, reload page (or re-call `init()`), verify data restored with correct `text`, `completed`, `label`, `url` fields intact.
-- Responsive layout at 375 px and 1200 px viewport widths.
-- Cross-browser smoke: Chrome, Firefox, Edge (latest) — all widgets render, all buttons respond.

@@ -10,48 +10,52 @@
   <div class="dashboard-grid">
 
     <!-- Greeting Widget -->
-    <section class="card" id="greeting-widget" aria-label="Greeting">
-      <div id="greeting-time"></div>
-      <div id="greeting-date"></div>
-      <div id="greeting-message"></div>
+    <section class="card greeting-card" id="greeting-widget" aria-label="Greeting">
+      <p class="widget-eyebrow">Today</p>
+      <div id="greeting-time" class="greeting-time">--:--</div>
+      <div id="greeting-date" class="greeting-date">Loading date...</div>
+      <div id="greeting-message" class="greeting-message">Hello!</div>
     </section>
 
     <!-- Focus Timer Widget -->
-    <section class="card" id="timer-widget" aria-label="Focus Timer">
+    <section class="card timer-card" id="timer-widget" aria-label="Focus Timer">
+      <p class="widget-eyebrow">Pomodoro</p>
       <h2 class="card__title">Focus Timer</h2>
-      <div id="timer-display">25:00</div>
-      <div id="timer-message" aria-live="polite"></div>
-      <div class="timer-controls">
-        <button id="timer-start">Start</button>
-        <button id="timer-stop">Stop</button>
-        <button id="timer-reset">Reset</button>
+      <div id="timer-display" class="timer-display" aria-live="polite">25:00</div>
+      <div id="timer-message" class="timer-message" aria-live="polite"></div>
+      <div class="timer-controls" aria-label="Timer controls">
+        <button id="timer-start" type="button">Start</button>
+        <button id="timer-stop" type="button">Stop</button>
+        <button id="timer-reset" type="button" class="button-secondary">Reset</button>
       </div>
     </section>
 
     <!-- To-Do List Widget -->
-    <section class="card" id="todo-widget" aria-label="To-Do List">
+    <section class="card todo-card" id="todo-widget" aria-label="To-Do List">
+      <p class="widget-eyebrow">Daily Work</p>
       <h2 class="card__title">To-Do</h2>
       <div class="todo-input-row">
         <input id="todo-input" type="text" maxlength="200"
                placeholder="Add a task…" aria-label="Task description" />
-        <button id="todo-add">Add</button>
+        <button id="todo-add" type="button">Add</button>
       </div>
-      <div id="todo-validation" role="alert" aria-live="assertive"></div>
-      <ul id="todo-list" aria-label="Task list"></ul>
+      <div id="todo-validation" class="validation-message" role="alert" aria-live="assertive"></div>
+      <ul id="todo-list" class="todo-list" aria-label="Task list"></ul>
     </section>
 
     <!-- Quick Links Widget -->
-    <section class="card" id="links-widget" aria-label="Quick Links">
+    <section class="card links-card" id="links-widget" aria-label="Quick Links">
+      <p class="widget-eyebrow">Shortcuts</p>
       <h2 class="card__title">Quick Links</h2>
       <div class="links-input-row">
         <input id="link-label-input" type="text" maxlength="50"
                placeholder="Label" aria-label="Link label" />
         <input id="link-url-input" type="text" maxlength="2048"
                placeholder="URL" aria-label="Link URL" />
-        <button id="link-add">Add</button>
+        <button id="link-add" type="button">Add</button>
       </div>
-      <div id="links-validation" role="alert" aria-live="assertive"></div>
-      <div id="links-list" aria-label="Saved links"></div>
+      <div id="links-validation" class="validation-message" role="alert" aria-live="assertive"></div>
+      <div id="links-list" class="links-list" aria-label="Saved links"></div>
     </section>
 
   </div>
